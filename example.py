@@ -3,6 +3,8 @@ from streamlit_chatbox import *
 import time
 import simplejson as json
 
+from streamlit_chatbox.storydata import StoryData
+
 
 llm = FakeLLM()
 chat_box = ChatBox()
@@ -143,9 +145,23 @@ btns.download_button(
     mime="text/json",
 )
 
-if btns.button("clear history"):
-    chat_box.init_session(clear=True)
-    st.experimental_rerun()
+
+
+btns.download_button(
+    "Export Excel",
+    chat_box.to_excel(),
+    file_name="",
+)
+
+uploaded_file = st.file_uploader("上传一个Excel文件", type=["xlsx", "xls"])
+
+
+if uploaded_file is not None:
+    # 添加一个按钮用于初始化 StoryData 对象
+    if st.button("初始化 StoryData"):
+        # 初始化 StoryData 对象
+        story_data = StoryData(uploaded_file)
+        st.write("StoryData 对象已初始化")
 
 
 if show_history:
