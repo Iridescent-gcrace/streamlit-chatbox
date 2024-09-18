@@ -460,16 +460,16 @@ class ChatBox:
 class FakeLLM:
     def _answer(self, query: str) -> str:
         answer = f"this is llm answer for your question:\n\n{query}"
-        docs = ["reference 1", "reference 2", "reference 3"]
-        return answer, docs
+        # docs = ["reference 1", "reference 2", "reference 3"]
+        return answer
 
     def chat(self, query: str) -> str:
         return self._answer(query)
 
     def chat_stream(self, query: str):
-        text, docs = self._answer(query)
+        text = self._answer(query)
         for t in text:
-            yield t, docs
+            yield t
             time.sleep(0.1)
 
 
