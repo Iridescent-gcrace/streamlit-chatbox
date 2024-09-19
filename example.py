@@ -4,10 +4,12 @@ import time
 import simplejson as json
 
 from streamlit_chatbox.storydata import StoryData
+import threading
 
 
 llm = FakeLLM()
 chat_box = ChatBox()
+story_data = None
 chat_box.use_chat_name("chat1") # add a chat conversatoin
 
 def on_chat_change():
@@ -16,12 +18,12 @@ def on_chat_change():
 
 
 with st.sidebar:
-    st.subheader('start to chat using streamlit')
-    chat_name = st.selectbox("Chat Session:", ["default", "chat1"], key="chat_name", on_change=on_chat_change)
-    chat_box.use_chat_name(chat_name)
-    streaming = st.checkbox('streaming', key="streaming")
-    in_expander = st.checkbox('show messages in expander', key="in_expander")
-    show_history = st.checkbox('show session state', key="show_history")
+    st.subheader('sex ai rebot llm')
+    # chat_name = st.selectbox("Chat Session:", ["default", "chat1"], key="chat_name", on_change=on_chat_change)
+    # chat_box.use_chat_name(chat_name)
+    # streaming = st.checkbox('streaming', key="streaming")
+    # in_expander = st.checkbox('show messages in expander', key="in_expander")
+    # show_history = st.checkbox('show session state', key="show_history")
     chat_box.context_from_session(exclude=["chat_name"]) # save widget values to chat context
 
     st.divider()
@@ -29,14 +31,13 @@ with st.sidebar:
     btns = st.container()
 
     file = st.file_uploader(
-        "chat history json",
-        type=["json"]
+        "story excel",
+        type=["xlsx", "xls"],
     )
-
     if st.button("Load Json") and file:
-        data = json.load(file)
-        chat_box.from_dict(data)
-
+        story_data = StoryData(file)
+        
+    
 
 chat_box.init_session()
 chat_box.output_messages()
@@ -61,41 +62,62 @@ feedback_kwargs = {
     "optional_text_label": "wellcome to feedback",
 }
 
-if query := st.chat_input('input your question here'):
-    chat_box.user_say(query)
-    if streaming:
-        generator = llm.chat_stream(query)
-        elements = chat_box.ai_say(
-            [
-                # you can use string for Markdown output if no other parameters provided
-                Markdown("thinking", in_expander=in_expander,
-                         expanded=True, title="answer"),
-                Markdown("", in_expander=in_expander, title="references"),
-            ]
-        )
-        time.sleep(1)
-        text = ""
-        for x, docs in generator:
-            text += x
-            chat_box.update_msg(text, element_index=0, streaming=True)
-        # update the element without focus
-        chat_box.update_msg(text, element_index=0, streaming=False, state="complete")
-        chat_box.update_msg("\n\n".join(docs), element_index=1, streaming=False, state="complete")
-        chat_history_id = "some id"
-        chat_box.show_feedback(**feedback_kwargs,
-                                key=chat_history_id,
-                                on_submit=on_feedback,
-                                kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
-    else:
-        text = llm.chat(query)
-        chat_box.ai_say(
-            [
-                Markdown(text, in_expander=in_expander,
-                         expanded=True, title="answer"),
-                # Markdown("\n\n".join(docs), in_expander=in_expander,
-                #          title="references"),
-            ]
-        )
+def process_story_data():
+    # dialogue_placeholder = st.empty()  # 占位符，用于动态更新对话内容
+
+    if story_data is not None:
+        for idx, row in enumerate(story_data.dialogue_data):
+            if session:
+                break
+            chat_box.ai_say([
+                Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
+            ])
+            time.sleep(3)
+
+def user_input():
+    global session
+    if query := st.chat_input('input your question here'):
+        chat_box.user_say(query)
+        session = True
+
+session = False
+
+process_story_data()
+
+user_input()
+    # if streaming:
+    #     generator = llm.chat_stream(query)
+    #     elements = chat_box.ai_say(
+    #         [
+    #             # you can use string for Markdown output if no other parameters provided
+    #             Markdown("thinking", in_expander=in_expander,
+    #                      expanded=True, title="answer"),
+    #             Markdown("", in_expander=in_expander, title="references"),
+    #         ]
+    #     )
+    #     time.sleep(1)
+    #     text = ""
+    #     for x, docs in generator:
+    #         text += x
+    #         chat_box.update_msg(text, element_index=0, streaming=True)
+    #     # update the element without focus
+    #     chat_box.update_msg(text, element_index=0, streaming=False, state="complete")
+    #     chat_box.update_msg("\n\n".join(docs), element_index=1, streaming=False, state="complete")
+    #     chat_history_id = "some id"
+    #     chat_box.show_feedback(**feedback_kwargs,
+    #                             key=chat_history_id,
+    #                             on_submit=on_feedback,
+    #                             kwargs={"chat_history_id": chat_history_id, "history_index": len(chat_box.history) - 1})
+    # else:
+    #     text = llm.chat(query)
+    #     chat_box.ai_say(
+    #         [
+    #             Markdown(text, in_expander=in_expander,
+    #                      expanded=True, title="answer"),
+    #             # Markdown("\n\n".join(docs), in_expander=in_expander,
+    #             #          title="references"),
+    #         ]
+    #     )
 
 # cols = st.columns(2)
 # if cols[0].button('show me the multimedia'):
@@ -131,38 +153,25 @@ if query := st.chat_input('input your question here'):
 #         else:
 #             chat_box.update_msg(text, streaming=False)
 
-btns.download_button(
-    "Export Markdown",
-    "".join(chat_box.export2md()),
-    file_name=f"chat_history.md",
-    mime="text/markdown",
-)
+# btns.download_button(
+#     "Export Markdown",
+#     "".join(chat_box.export2md()),
+#     file_name=f"chat_history.md",
+#     mime="text/markdown",
+# )
 
-btns.download_button(
-    "Export Json",
-    chat_box.to_json(),
-    file_name="chat_history.json",
-    mime="text/json",
-)
-
-
-
-btns.download_button(
-    "Export Excel",
-    chat_box.to_excel(),
-    file_name="",
-)
-
-uploaded_file = st.file_uploader("上传一个Excel文件", type=["xlsx", "xls"])
+# btns.download_button(
+#     "Export Json",
+#     chat_box.to_json(),
+#     file_name="chat_history.json",
+#     mime="text/json",
+# )
 
 
-if uploaded_file is not None:
-    # 添加一个按钮用于初始化 StoryData 对象
-    if st.button("初始化 StoryData"):
-        # 初始化 StoryData 对象
-        story_data = StoryData(uploaded_file)
-        st.write("StoryData 对象已初始化")
 
 
-if show_history:
-    st.write(st.session_state)
+
+
+
+# if show_history:
+#     st.write(st.session_state)
