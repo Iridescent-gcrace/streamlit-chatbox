@@ -9,11 +9,11 @@ class StoryData:
         
         excel_data1 = pd.read_excel(file,sheet_name=0)
         # 定位表格中A列 “声音情绪可选”这一行
-        self.voice_emotion_row = excel_data.loc[excel_data.iloc[:, 0] == '声音情绪可选', 'Unnamed: 1'].values[0]
+        self.voice_emotion_row = excel_data1.loc[excel_data1.iloc[:, 0] == '声音情绪可选', 'Unnamed: 1'].values[0]
         # 定位表格“动作声音可选”
-        self.movement_sound_row = excel_data.loc[excel_data.iloc[:, 0] == '动作声音可选', 'Unnamed: 1'].values[0]
+        self.movement_sound_row = excel_data1.loc[excel_data1.iloc[:, 0] == '动作声音可选', 'Unnamed: 1'].values[0]
         
-        self.special_sound_row = excel_data.loc[excel_data.iloc[:, 0] == '可选角色特殊声音', 'Unnamed: 1'].values[0]
+        self.special_sound_row = excel_data1.loc[excel_data1.iloc[:, 0] == '可选角色特殊声音', 'Unnamed: 1'].values[0]
 
         
         
