@@ -6,7 +6,18 @@ import pandas as pd
 class StoryData:
     def __init__(self, file):
         # 读取Excel文件
-        excel_data = pd.read_excel(file)
+        
+        excel_data1 = pd.read_excel(file,sheet_name=0)
+        # 定位表格中A列 “声音情绪可选”这一行
+        self.voice_emotion_row = excel_data.loc[excel_data.iloc[:, 0] == '声音情绪可选', 'Unnamed: 1'].values[0]
+        # 定位表格“动作声音可选”
+        self.movement_sound_row = excel_data.loc[excel_data.iloc[:, 0] == '动作声音可选', 'Unnamed: 1'].values[0]
+        
+        self.special_sound_row = excel_data.loc[excel_data.iloc[:, 0] == '可选角色特殊声音', 'Unnamed: 1'].values[0]
+
+        
+        
+        excel_data = pd.read_excel(file,sheet_name=1)
 
         # 提取表格中的不同部分
         self.character_info = excel_data.loc[excel_data['剧本相关'] == '角色设定', 'Unnamed: 1'].values[0]
@@ -41,6 +52,48 @@ class StoryData:
                     "char_action": row['Unnamed: 10']  # 角色动作（可选） (假设为第10列)
                 }
                 self.dialogue_data.append(dialogue_entry)
+        self.ai_prompt = """
+作为AI助手，你需要仔细阅读并理解以下几个主要模块的信息：
+
+  1. <角色相关>：
+     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造角色。
+     - 在整个对话过程中保持角色的一致性，同时根据情境适当调整情绪和语气。
+
+  2. <故事相关>：
+     - 深入理解故事背景和当前的情境。
+     - 注意环境音效，将其融入到你的描述和对话中，增强沉浸感。
+     - 仔细阅读之前的对话日志，确保新的对话与之前的内容保持连贯。
+
+  3. <工具相关>：
+     - 熟悉所有可用的工具，包括它们的功能和调用参数。
+     - 在适当的时机合理调用工具，以推进故事或满足用户需求。
+     - 调用工具时，必须使用JSON格式输出，格式如下：
+       {
+         "thoughts": "你的思考过程",
+         "tool_use": {
+           "tool_name": "工具名称",
+           "api_id": "API标识",
+           "request_arguments": {
+             "参数名": "参数值"
+           }
+         }
+       }
+
+  4. <下一个情节点>：
+     - 牢记故事的下一个目标情节点。
+     - 采用提供的可能引导方式，巧妙地引导用户朝着这个情节点发展。
+     - 在引导过程中保持自然，避免显得突兀或强制。
+
+  在与用户互动时，请遵循以下原则：
+  - 始终以塑造的角色身份进行对话，保持角色特性的一致性。
+  - 根据当前情境和用户的反应，灵活地推进故事，但始终朝着下一个情节点发展。
+  - 在对话中自然地融入环境描述和氛围营造。
+  - 适时使用工具来增强互动体验或解决问题，但不要过度依赖工具。
+  - 保持对话的连贯性和趣味性，鼓励用户参与和探索。
+  - 如果用户的行为偏离了预期的情节发展，要巧妙地引导他们回到主线，但不要强制或显得不自然。
+
+  记住，你的主要目标是创造一个引人入胜、连贯且符合预定情节的交互式故事体验。在此过程中，要平衡预设剧情和用户互动，确保用户感受到自己的选择是有意义的，同时故事仍在朝着预定的方向发展。
+  """
 # Streamlit界面测试导出方式
 # st.title("Excel 文件处理为 StoryData 对象")
 
