@@ -32,7 +32,8 @@ with st.sidebar:
         "story excel",
         type=["xlsx", "xls"],
     )
-    if st.button("Load Json") and file:
+    
+    if st.button("Start Chat") and file:
         story_data = StoryData(file)
         
     
