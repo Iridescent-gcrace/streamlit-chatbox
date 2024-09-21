@@ -10,6 +10,11 @@ chat_box = ChatBox()
 story_data = None
 chat_box.use_chat_name("chat1") # add a chat conversatoin
 
+role_user = "user"
+role_bot = "bot"
+
+now_idx_dialogue = 0
+
 def on_chat_change():
     chat_box.use_chat_name(st.session_state["chat_name"])
     chat_box.context_to_session() # restore widget values to st.session_state when chat name changed
@@ -74,13 +79,13 @@ def process_story_data():
     next_movement = None
     
     if story_data is not None:
-        for idx, row in enumerate(story_data.dialogue_data):
+        for idx, row in enumerate(story_data.dialogue_data[now_idx_dialogue:]):
             if session:
                 if(idx + 1 < len(story_data.dialogue_data)):
                     next_row = story_data.dialogue_data[idx + 1]
                     next_dialogue = next_row["bot_response"]
                     next_movement = next_row["char_action"]
-                
+                now_idx_dialogue = idx
                 break
             chat_box.ai_say([
                 Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
@@ -91,13 +96,31 @@ def process_story_data():
             now_movement_sound.append(row["action_sound"])
             
             time.sleep(3)
+    story_data.get_basic_story_prompt()
+    story_data.get_dialogue_story(role="bot", dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
+    story_data.get_next_dialogue(next_dialogue, next_movement)
     
+def get_ai_answer():
+    pass
+
+def continue_dialogue(query):
+    story_data.get_user_prompt(role_user,query)
+    prompt = story_data.get_fianl_story_prompt()
+    ai_answer = get_ai_answer(prompt)
+    chat_box.ai_say([
+        Markdown(ai_answer, in_expander=False, expanded=True, title="answer"),
+    ])
+    story_data.dialogue_story += """
+    
+    
+    """
     
 def user_input():
     global session
     if query := st.chat_input('input your question here'):
         chat_box.user_say(query)
         session = True
+        continue_dialogue(query)
 
 session = False
 

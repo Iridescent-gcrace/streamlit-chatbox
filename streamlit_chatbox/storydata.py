@@ -134,32 +134,48 @@ class StoryData:
       maybe_guide_xml = f"<可能的引导方式><![CDATA[{maybeGuide}]]></可能的引导方式>"
 
       # 返回完整的下一个情节点提示
-      return f"""
+      self.next_dialogue =  f"""
       <下一个情节点>
         {goal_xml}
         {maybe_guide_xml}
       </下一个情节点>
       """
+      return
       
-    def get_dialogue_story(self,role , now_dialogue, now_movement, now_sound_emotion, now_movement_sound):
+    def get_dialogue_story(self,role , dialogue, movement, sound_emotion, movement_sound):
       self.dialogue_story = ""
 
     # 假设所有输入列表长度相同
-      for idx, content in enumerate(now_dialogue):
+      for idx, content in enumerate(dialogue):
           # 拼接序号和对应的动作、对话内容、声音等
-          dialogue_story += f"""
+          self.dialogue_story += f"""
           <对话回合 序号="{idx + 1}">
-            <动作描述 发起者={role}>{now_movement[idx]}</bot动作>
-            <对话内容 发起者={role}>{now_movement_sound[idx]}{now_sound_emotion[idx]}{now_dialogue[idx]}</对话内容>
+            <动作描述 发起者={role}>![CDATA[{movement[idx]}][</bot动作>
+            <对话内容 发起者={role}>![CDATA[{movement_sound[idx]}{sound_emotion[idx]}{dialogue[idx]}]</对话内容>
           </对话回合>
           """
           
-      return dialogue_story
+
+    def get_user_prompt(self,role,input):
+      self.user_prompt = f"""
+
+<对话内容 发起者="{role}">
+  <![CDATA[
+    {input}
+  ]]>
+</对话内容>
       
-    def get_dialogue_story_prompt(self):
-      
-      return f"""
-      <故事日志>
-        {self.dialogue_story}
-      </故事日志>
       """
+    
+    def get_fianl_story_prompt(self):
+      return f"""
+      <提示>
+        {self.basic_prompt}
+        {self.next_dialogue}
+        <故事日志>
+          {self.dialogue_story}
+        <故事日志>
+        {self.user_prompt}
+      </提示>
+      """
+    
