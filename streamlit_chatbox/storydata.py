@@ -4,10 +4,13 @@ import pandas as pd
 
 # 定义 StoryData 类
 class StoryData:
-    def __init__(self, file):
+    def __init__(
+        self, 
+        file="../标注数据_0911_bubu&Tony_简单格式版 (1).xlsx",
+        story_prompt: str = "请输出信息"
+    ) -> None:
         # 读取Excel文件
-        
-        excel_data1 = pd.read_excel(file,sheet_name=0)
+        excel_data1 = pd.read_excel(file, sheet_name=0)
         # 定位表格中A列 “声音情绪可选”这一行
         self.voice_emotion_row = excel_data1.loc[excel_data1.iloc[:, 0] == '声音情绪可选', 'Unnamed: 1'].values[0]
         # 定位表格“动作声音可选”
@@ -52,6 +55,7 @@ class StoryData:
                     "char_action": row['Unnamed: 10']  # 角色动作（可选） (假设为第10列)
                 }
                 self.dialogue_data.append(dialogue_entry)
+        self.story_prompt = story_prompt
         self.ai_prompt = """
 作为AI助手，你需要仔细阅读并理解以下几个主要模块的信息：
 
@@ -94,27 +98,68 @@ class StoryData:
 
   记住，你的主要目标是创造一个引人入胜、连贯且符合预定情节的交互式故事体验。在此过程中，要平衡预设剧情和用户互动，确保用户感受到自己的选择是有意义的，同时故事仍在朝着预定的方向发展。
   """
-# Streamlit界面测试导出方式
-# st.title("Excel 文件处理为 StoryData 对象")
+    def get_basic_story_prompt(self):
+    # 故事角色相关设定
+      character_info = f"<角色设定><![CDATA[{self.character_info}]]></角色设定>"
+      special_sound = f"<可选特殊角色声音><![CDATA[{self.special_sound_row}]]></可选特殊角色声音>"
+      emotion = f"<可选角色情绪><![CDATA[{self.voice_emotion_row}]]></可选角色情绪>"
 
-# # 文件上传
-# uploaded_file = st.file_uploader("上传一个Excel文件", type=["xlsx", "xls"])
+      # 故事背景相关设定
+      story_background = f"<故事背景><![CDATA[{self.story_background}]]></故事背景>"
+      movement_sound = f"<可选故事环境音><![CDATA[{self.movement_sound_row}]]></可选故事环境音>"
 
-# if uploaded_file is not None:
-#     # 按钮用于处理文件并生成 StoryData 对象
-#     if st.button("处理并生成 StoryData"):
-#         # 通过文件初始化StoryData对象
-#         story_data = StoryData(uploaded_file)
-        
-#         # 展示StoryData对象内容
-#         st.write("### 角色设定")
-#         st.text(story_data.character_info)
-        
-#         st.write("### 任务设定")
-#         st.text(story_data.task_info)
-        
-#         st.write("### 故事背景")
-#         st.text(story_data.story_background)
-        
-#         st.write("### 对话数据")
-#         st.write(story_data.dialogue_data)
+      # AI的指令
+      ai_prompt = f"<指令><![CDATA[{self.ai_prompt}]]></指令>"
+
+      # 返回完整的故事提示
+      self.basic_prompt =  f"""
+      <角色相关>
+        {character_info}
+        {special_sound}
+        {emotion}
+      </角色相关>
+      <故事相关>
+        {story_background}
+        {movement_sound}
+      </故事相关>
+      {ai_prompt}
+      """
+      return 
+
+    def get_next_dialogue(self, goal, maybeGuide):
+    # 目标设定
+      goal_xml = f"<目标><![CDATA[{goal}]]></目标>"
+      
+      # 可能的引导方式
+      maybe_guide_xml = f"<可能的引导方式><![CDATA[{maybeGuide}]]></可能的引导方式>"
+
+      # 返回完整的下一个情节点提示
+      return f"""
+      <下一个情节点>
+        {goal_xml}
+        {maybe_guide_xml}
+      </下一个情节点>
+      """
+      
+    def get_dialogue_story(self,role , now_dialogue, now_movement, now_sound_emotion, now_movement_sound):
+      self.dialogue_story = ""
+
+    # 假设所有输入列表长度相同
+      for idx, content in enumerate(now_dialogue):
+          # 拼接序号和对应的动作、对话内容、声音等
+          dialogue_story += f"""
+          <对话回合 序号="{idx + 1}">
+            <动作描述 发起者={role}>{now_movement[idx]}</bot动作>
+            <对话内容 发起者={role}>{now_movement_sound[idx]}{now_sound_emotion[idx]}{now_dialogue[idx]}</对话内容>
+          </对话回合>
+          """
+          
+      return dialogue_story
+      
+    def get_dialogue_story_prompt(self):
+      
+      return f"""
+      <故事日志>
+        {self.dialogue_story}
+      </故事日志>
+      """

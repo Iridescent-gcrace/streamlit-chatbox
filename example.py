@@ -61,18 +61,38 @@ feedback_kwargs = {
     "optional_text_label": "wellcome to feedback",
 }
 
+story_prompt = None
+
+
 def process_story_data():
     # dialogue_placeholder = st.empty()  # 占位符，用于动态更新对话内容
-
+    now_dialogue = []
+    now_movement = []
+    now_sound_emotion = []
+    now_movement_sound = []
+    next_dialogue = None
+    next_movement = None
+    
     if story_data is not None:
         for idx, row in enumerate(story_data.dialogue_data):
             if session:
+                if(idx + 1 < len(story_data.dialogue_data)):
+                    next_row = story_data.dialogue_data[idx + 1]
+                    next_dialogue = next_row["bot_response"]
+                    next_movement = next_row["char_action"]
+                
                 break
             chat_box.ai_say([
                 Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
             ])
+            now_dialogue.append(row["bot_response"])
+            now_movement.append(row["char_action"])
+            now_sound_emotion.append(row["sound_emotion"])
+            now_movement_sound.append(row["action_sound"])
+            
             time.sleep(3)
-
+    
+    
 def user_input():
     global session
     if query := st.chat_input('input your question here'):
