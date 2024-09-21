@@ -6,7 +6,7 @@ import pandas as pd
 class StoryData:
     def __init__(
         self, 
-        file="../标注数据_0911_bubu&Tony_简单格式版 (1).xlsx",
+        file="../标注数据.xlsx",
         story_prompt: str = "请输出信息"
     ) -> None:
         # 读取Excel文件
@@ -33,7 +33,7 @@ class StoryData:
                 # 提取从“对话数据”之后的内容
         self.dialogue_data = []
         print(excel_data.iloc[dialogue_start_idx:].iterrows())
-        os.write(1, f"{excel_data.iloc[dialogue_start_idx:].iterrows()}\n".encode()) 
+        # os.write(1, f"{excel_data.iloc[dialogue_start_idx:].iterrows()}\n".encode()) 
 
         # for idx, row in excel_data.iloc[dialogue_start_idx:].iterrows():
         #     st.write(f"行 {idx}: {row.to_dict()}")  # 将每行内容转换为字典格式并显示
@@ -142,7 +142,7 @@ class StoryData:
       """
       return
       
-    def get_dialogue_story(self,role , dialogue, movement, sound_emotion, movement_sound):
+    def get_dialogue_story(self, role, dialogue, movement, sound_emotion, movement_sound):
       self.dialogue_story = ""
 
     # 假设所有输入列表长度相同
@@ -156,7 +156,7 @@ class StoryData:
           """
           
 
-    def get_user_prompt(self,role,input):
+    def get_user_prompt(self, role, input):
       self.user_prompt = f"""
 
 <对话内容 发起者="{role}">
