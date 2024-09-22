@@ -17,9 +17,6 @@ if 'story_data' not in st.session_state:
 if 'session' not in st.session_state:
     st.session_state.session = False
 
-if 'now_idx_dialogue' not in st.session_state:
-    st.session_state.now_idx_dialogue = 0
-
 
 if 'now_idx_dialogue' not in st.session_state:
     st.session_state.now_idx_dialogue = 0
@@ -48,35 +45,42 @@ def on_chat_change():
 
 
 def process_story_data():
-    # 检查st.session_state中是否已经有变量，如果没有则初始化
-
-
-    # 从st.session_state中获取变量
     now_idx_dialogue = st.session_state.now_idx_dialogue
-
     story_data = st.session_state.story_data
 
     if story_data is not None:
-        for idx, row in enumerate(story_data.dialogue_data[now_idx_dialogue+1:]):
-            # st.write(st.session_state.session)
-            if (idx + 1 < len(story_data.dialogue_data)):
+        total_dialogues = len(story_data.dialogue_data)
+
+        # 手动控制循环从 now_idx_dialogue + 1 开始
+        idx = now_idx_dialogue + 1
+        while idx < total_dialogues:
+            row = story_data.dialogue_data[idx]
+
+            # 如果有下一个对话，准备好下一个状态
+            if idx + 1 < total_dialogues:
                 next_row = story_data.dialogue_data[idx + 1]
                 st.session_state.next_dialogue = next_row["bot_response"]
                 st.session_state.next_movement = next_row["char_action"]
-            
-                # break
+
+            # 输出当前的对话
             chat_box.ai_say([
                 Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
             ])
 
-            # 更新st.session_state中的变量
-            st.session_state.now_idx_dialogue = idx
+            # 更新局部变量和 session_state
             st.session_state.now_dialogue.append(row["bot_response"])
             st.session_state.now_movement.append(row["char_action"])
             st.session_state.now_sound_emotion.append(row["sound_emotion"])
             st.session_state.now_movement_sound.append(row["action_sound"])
 
+            st.session_state.now_idx_dialogue = idx
+
+            # 模拟延迟
             time.sleep(3)
+
+            # 增加索引
+            idx += 1
+
 
         
   
@@ -101,15 +105,6 @@ with st.sidebar:
     if(file):
         st.session_state.story_data = StoryData(file)
     
-
-        
-    
-
-
-
-
-
-
 
 def on_feedback(
     feedback,
@@ -138,10 +133,10 @@ def get_ai_answer(prompt):
     return "test ai answer"
 
 def continue_dialogue(query):
+    # time.sleep(2)
     story_data = st.session_state.story_data
     # st.write("++++++++")
     # st.write( story_data.__dict__)
-    now_idx_dialogue = st.session_state.now_idx_dialogue
     now_dialogue = st.session_state.now_dialogue
     now_movement = st.session_state.now_movement
     now_sound_emotion = st.session_state.now_sound_emotion
@@ -182,6 +177,7 @@ def user_input():
         # st.write(query)
         chat_box.user_say(query)
         st.session_state.session = True
+        now_idx_dialogue = st.session_state.now_idx_dialogue
         continue_dialogue(query)
         st.session_state.session = False
 
@@ -193,3 +189,24 @@ if st.button("Start Chat") :
 # st.write("user input")
 user_input()
 # st.write("user input done")
+
+
+
+if st.button("清除 session"):
+    st.session_state.clear()
+    # st.experimental_rerun()
+    
+def save_state():
+    st.session_state.update({
+        "now_idx_dialogue": st.session_state.now_idx_dialogue,
+        "now_dialogue": st.session_state.now_dialogue,
+        "now_movement": st.session_state.now_movement,
+        "now_sound_emotion": st.session_state.now_sound_emotion,
+        "now_movement_sound": st.session_state.now_movement_sound,
+        "next_dialogue": st.session_state.next_dialogue,
+        "next_movement": st.session_state.next_movement
+    })
+
+# 添加保存状态的按钮
+if st.button("Save State"):
+    save_state()
