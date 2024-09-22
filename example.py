@@ -57,19 +57,20 @@ def process_story_data():
     story_data = st.session_state.story_data
 
     if story_data is not None:
-        for idx, row in enumerate(story_data.dialogue_data[now_idx_dialogue+2:]):
+        for idx, row in enumerate(story_data.dialogue_data[now_idx_dialogue+1:]):
             # st.write(st.session_state.session)
             if (idx + 1 < len(story_data.dialogue_data)):
                 next_row = story_data.dialogue_data[idx + 1]
                 st.session_state.next_dialogue = next_row["bot_response"]
                 st.session_state.next_movement = next_row["char_action"]
-            st.session_state.now_idx_dialogue = idx
+            
                 # break
             chat_box.ai_say([
                 Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
             ])
 
             # 更新st.session_state中的变量
+            st.session_state.now_idx_dialogue = idx
             st.session_state.now_dialogue.append(row["bot_response"])
             st.session_state.now_movement.append(row["char_action"])
             st.session_state.now_sound_emotion.append(row["sound_emotion"])
@@ -131,7 +132,9 @@ story_prompt = None
 
 
     
-def get_ai_answer(query):
+def get_ai_answer(prompt):
+    
+    
     return "test ai answer"
 
 def continue_dialogue(query):
