@@ -128,7 +128,11 @@ story_prompt = None
 
     
 def get_ai_answer(prompt):
-    
+    # from openai import OpenAI
+    # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    # messages = [{"role": "user", "content": prompt}]
+    # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
+    # print(result.choices[0].message)
     
     return "test ai answer"
 
