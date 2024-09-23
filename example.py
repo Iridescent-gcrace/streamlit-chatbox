@@ -182,24 +182,37 @@ def continue_dialogue(query):
         <![CDATA[
         {query}
         ]]>
-      </对话内容>
+    </对话内容>
     
     """
     
     story_data.dialogue_story += f"""
+        <动作描述 发起者={role_bot}>
+            <![CDATA[
+                {action}
+            ]]>
+        </动作描述>
         <对话内容 发起者={role_bot}>
-        <![CDATA[
-        {action}{dialogue}
-        ]]>
+            <![CDATA[
+                {dialogue}
+            ]]>
+        </对话内容>
     """
     st.session_state.story_data = story_data
     
+    
+def replace_char_user(text, role_user, role_bot):
+    text = re.sub(r'{{char}}',  role_bot)
+    text = re.sub(r'{{user}}', role_user) 
+    return text
+
 def user_input():
     if query := st.chat_input('input your question here'):
         # st.write(query)
         chat_box.user_say(query)
         st.session_state.session = True
         now_idx_dialogue = st.session_state.now_idx_dialogue
+        
         continue_dialogue(query)
         st.session_state.session = False
 

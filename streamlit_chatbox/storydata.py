@@ -160,7 +160,6 @@ class StoryData:
           now_movement = self.replace_you_and_me(now_movement)
           now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
           now_movement_sound = self.replace_you_and_me(now_movement_sound)
-          now_dialogue = self.replace_you_and_me(now_dialogue) 
           self.dialogue_story += f"""
           <对话回合 序号="{idx + 1}">
             <动作描述 发起者={role}>![CDATA[{now_movement}][</bot动作>
