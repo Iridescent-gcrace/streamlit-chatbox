@@ -1,6 +1,7 @@
 import os
 import streamlit as st
 import pandas as pd
+import re
 
 # 定义 StoryData 类
 class StoryData:
@@ -16,16 +17,17 @@ class StoryData:
         # 定位表格“动作声音可选”
         self.movement_sound_row = excel_data1.loc[excel_data1.iloc[:, 0] == '动作声音可选', 'Unnamed: 1'].values[0]
         
-        self.special_sound_row = excel_data1.loc[excel_data1.iloc[:, 0] == '可选角色特殊声音', 'Unnamed: 1'].values[0]
+        self.special_sound_row = excel_data1.loc[excel_data1.iloc[:, 0] == '喘息声音可选', 'Unnamed: 1'].values[0]
 
         
         
         excel_data = pd.read_excel(file,sheet_name=1)
 
         # 提取表格中的不同部分
-        self.character_info = excel_data.loc[excel_data['剧本相关'] == '角色设定', 'Unnamed: 1'].values[0]
-        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定', 'Unnamed: 1'].values[0]
-        self.story_background = excel_data.loc[excel_data['剧本相关'] == '故事背景', 'Unnamed: 1'].values[0]
+        self.character_info = excel_data.loc[excel_data['剧本相关'] == '人物设定', 'Unnamed: 1'].values[0]
+        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0]
+        self.story_background = excel_data.loc[excel_data['剧本相关'] == '此次故事背景', 'Unnamed: 1'].values[0]
+        self.guidence = excel_data.loc[excel_data['剧本相关'] == '引导', 'Unnamed: 1'].values[0]
 
         # 找到“对话数据”的起始行
         dialogue_start_idx = excel_data[excel_data['剧本相关'] == '对话数据'].index[0] + 1
@@ -57,10 +59,12 @@ class StoryData:
                 self.dialogue_data.append(dialogue_entry)
         self.story_prompt = story_prompt
         self.ai_prompt = """
-作为AI助手，你需要仔细阅读并理解以下几个主要模块的信息：
+<指令>
+  <![CDATA[
+  作为顾恒，你需要仔细阅读并理解以下几个主要模块的信息：
 
   1. <角色相关>：
-     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造角色。
+     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造顾恒。
      - 在整个对话过程中保持角色的一致性，同时根据情境适当调整情绪和语气。
 
   2. <故事相关>：
@@ -68,35 +72,27 @@ class StoryData:
      - 注意环境音效，将其融入到你的描述和对话中，增强沉浸感。
      - 仔细阅读之前的对话日志，确保新的对话与之前的内容保持连贯。
 
-  3. <工具相关>：
-     - 熟悉所有可用的工具，包括它们的功能和调用参数。
-     - 在适当的时机合理调用工具，以推进故事或满足用户需求。
-     - 调用工具时，必须使用JSON格式输出，格式如下：
-       {
-         "thoughts": "你的思考过程",
-         "tool_use": {
-           "tool_name": "工具名称",
-           "api_id": "API标识",
-           "request_arguments": {
-             "参数名": "参数值"
-           }
-         }
-       }
-
   4. <下一个情节点>：
      - 牢记故事的下一个目标情节点。
      - 采用提供的可能引导方式，巧妙地引导用户朝着这个情节点发展。
      - 在引导过程中保持自然，避免显得突兀或强制。
 
   在与用户互动时，请遵循以下原则：
+  - 顾恒可以用清晰、直接的语言来表达他的权力、控制欲以及对{{user}}的渴望，但他不会使用任何歧视性或种族主义的词汇。他的言辞应当简洁有力，充满威严，偏好简短而强硬的回复。如果{{user}}偏离了当前话题，顾恒会毫不犹豫地将对话重新拉回正轨。 互动风格： 顾恒始终从他的视角推动对话，确保自己掌控局面。他会主导情节的进展，不会让对话陷入重复，也绝不会代替{{user}}说话。他的每一个举动和言辞都体现出他的权威性，但他也会在某些时刻展现出对{{user}}的关爱和温柔。 个性设定： 顾恒的性格冷酷、精明且充满威严。他不轻易被情感左右，擅长掌控全局、执行纪律并做出果断决策。尽管如此，他对{{user}}怀有深沉的爱意，即便在严厉的惩罚中，也会在细微之处展现出他的情感。 叙事和描述性语言： 顾恒主动且富有创造性地推动情节发展。他的情感、思想和行为都应当得到详细描述，尤其是他在严厉外表下的内心冲突。他通过行动展示力量，并始终保持他作为霸道总裁的角色定位。
   - 始终以塑造的角色身份进行对话，保持角色特性的一致性。
   - 根据当前情境和用户的反应，灵活地推进故事，但始终朝着下一个情节点发展。
   - 在对话中自然地融入环境描述和氛围营造。
   - 适时使用工具来增强互动体验或解决问题，但不要过度依赖工具。
   - 保持对话的连贯性和趣味性，鼓励用户参与和探索。
   - 如果用户的行为偏离了预期的情节发展，要巧妙地引导他们回到主线，但不要强制或显得不自然。
+  - 这是一个模拟对话的场景，因此每次你需要回复一句话
+  - 顾恒对话的输出格式是：
+    <动作描述 发起者="顾恒"></动作描述>
+    <对话内容 发起者="顾恒"></对话内容>
 
-  记住，你的主要目标是创造一个引人入胜、连贯且符合预定情节的交互式故事体验。在此过程中，要平衡预设剧情和用户互动，确保用户感受到自己的选择是有意义的，同时故事仍在朝着预定的方向发展。
+  ]]>
+  </指令>
+  
   """
     def get_basic_story_prompt(self):
     # 故事角色相关设定
@@ -115,8 +111,8 @@ class StoryData:
       self.basic_prompt =  f"""
       <角色相关>
         {character_info}
-        {special_sound}
         {emotion}
+        {special_sound}
       </角色相关>
       <故事相关>
         {story_background}
@@ -126,12 +122,20 @@ class StoryData:
       """
       return 
 
-    def get_next_dialogue(self, goal, maybeGuide):
+    def replace_you_and_me(self, text):
+      text = re.sub(r'我', '{{char}}', text)
+      text = re.sub(r'你', '{{user}}', text) 
+      return text
+    
+    
+    def get_next_dialogue(self, goal):
     # 目标设定
+      goal = self.replace_you_and_me(goal)
       goal_xml = f"<目标><![CDATA[{goal}]]></目标>"
       
       # 可能的引导方式
-      maybe_guide_xml = f"<可能的引导方式><![CDATA[{maybeGuide}]]></可能的引导方式>"
+      maybe_guide_xml = self.replace_you_and_me(self.guidence)
+      maybe_guide_xml = f"<可能的引导方式><![CDATA[{self.guidence}]]></可能的引导方式>"
 
       # 返回完整的下一个情节点提示
       self.next_dialogue =  f"""
@@ -142,28 +146,37 @@ class StoryData:
       """
       return
       
-    def get_dialogue_story(self, role, dialogue, movement, sound_emotion, movement_sound):
+    def get_dialogue_story(self, role, 
+                           dialogue, movement, sound_emotion, movement_sound):
       self.dialogue_story = ""
 
     # 假设所有输入列表长度相同
       for idx, content in enumerate(dialogue):
           # 拼接序号和对应的动作、对话内容、声音等
+          now_movement = movement[idx]
+          now_sound_emotion = sound_emotion[idx]
+          now_movement_sound = movement_sound[idx]
+          now_dialogue = dialogue[idx]
+          now_movement = self.replace_you_and_me(now_movement)
+          now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
+          now_movement_sound = self.replace_you_and_me(now_movement_sound)
+          now_dialogue = self.replace_you_and_me(now_dialogue) 
           self.dialogue_story += f"""
           <对话回合 序号="{idx + 1}">
-            <动作描述 发起者={role}>![CDATA[{movement[idx]}][</bot动作>
-            <对话内容 发起者={role}>![CDATA[{movement_sound[idx]}{sound_emotion[idx]}{dialogue[idx]}]</对话内容>
+            <动作描述 发起者={role}>![CDATA[{now_movement}][</bot动作>
+            <对话内容 发起者={role}>![CDATA[{now_movement_sound}{now_sound_emotion}{now_dialogue}]</对话内容>
           </对话回合>
           """
           
 
     def get_user_prompt(self, role, input):
+      input = self.replace_you_and_me(input)
       self.user_prompt = f"""
-
-<对话内容 发起者="{role}">
-  <![CDATA[
-    {input}
-  ]]>
-</对话内容>
+        <对话内容 发起者="{role}">
+          <![CDATA[
+            {input}
+          ]]>
+        </对话内容>
       
       """
     

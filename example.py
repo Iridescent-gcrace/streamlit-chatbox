@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_chatbox import *
 import time
 import simplejson as json
+import re
 
 
 from streamlit_chatbox.storydata import StoryData
@@ -128,13 +129,26 @@ story_prompt = None
 
     
 def get_ai_answer(prompt):
-    # from openai import OpenAI
-    # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
-    # messages = [{"role": "user", "content": prompt}]
-    # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
+    from openai import OpenAI
+    # st.info(
+    #     f"{prompt}"
+    # )
+    client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    messages = [{"role": "user", "content": prompt}]
+    result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
     # print(result.choices[0].message)
     
-    return "test ai answer"
+    text = result.choices[0].message
+    # st.info(text)
+    st.info(text.content)
+    text = text.content
+    action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
+    dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
+
+    # 提取匹配到的内容
+    action = action_match.group(1) if action_match else ""
+    dialogue = dialogue_match.group(1) if dialogue_match else ""
+    return action,dialogue
 
 def continue_dialogue(query):
     # time.sleep(2)
@@ -149,15 +163,19 @@ def continue_dialogue(query):
     next_movement = st.session_state.next_movement
     story_data.get_basic_story_prompt()
     story_data.get_dialogue_story(role="bot", dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
-    story_data.get_next_dialogue(next_dialogue, next_movement)
+    story_data.get_next_dialogue(next_dialogue)
     st.session_state.story_data = story_data
     
     story_data.get_user_prompt(role_user,query)
     story_data.get_basic_story_prompt()
     prompt = story_data.get_fianl_story_prompt()
-    ai_answer = get_ai_answer(prompt)
+    action,dialogue = get_ai_answer(prompt)
+    
     chat_box.ai_say([
-        Markdown(ai_answer, in_expander=False, expanded=True, title="answer"),
+        Markdown("场景描述：" + action, in_expander=False, expanded=True, title="answer"),
+    ])
+    chat_box.ai_say([
+        Markdown("对话：" + dialogue, in_expander=False, expanded=True, title="answer"),
     ])
     story_data.dialogue_story += f"""
     <对话内容 发起者={role_user}>
@@ -171,7 +189,7 @@ def continue_dialogue(query):
     story_data.dialogue_story += f"""
         <对话内容 发起者={role_bot}>
         <![CDATA[
-        {ai_answer}
+        {action}{dialogue}
         ]]>
     """
     st.session_state.story_data = story_data
