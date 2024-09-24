@@ -12,6 +12,7 @@ class StoryData:
     ) -> None:
         # 读取Excel文件
         excel_data1 = pd.read_excel(file, sheet_name=0)
+        self._excel1 = excel_data1
         # 定位表格中A列 “声音情绪可选”这一行
         self.voice_emotion_row = excel_data1.loc[excel_data1.iloc[:, 0] == '声音情绪可选', 'Unnamed: 1'].values[0]
         # 定位表格“动作声音可选”
@@ -22,7 +23,7 @@ class StoryData:
         
         
         excel_data = pd.read_excel(file,sheet_name=1)
-
+        self._excel2 = excel_data
         # 提取表格中的不同部分
         self.character_info = excel_data.loc[excel_data['剧本相关'] == '人物设定', 'Unnamed: 1'].values[0]
         self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0].replace("{{char}}", '顾恒')
@@ -31,9 +32,8 @@ class StoryData:
  
         # 找到“对话数据”的起始行
         dialogue_start_idx = excel_data[excel_data['剧本相关'] == '对话数据'].index[0] + 1
-
+        self.data_excel = []
         # 提取从“对话数据”之后的内容
-        self.dialogue_data = []
         print(excel_data.iloc[dialogue_start_idx:].iterrows())
         # os.write(1, f"{excel_data.iloc[dialogue_start_idx:].iterrows()}\n".encode()) 
 
@@ -59,10 +59,10 @@ class StoryData:
                 print(dialogue_entry)
                 self.dialogue_data.append(dialogue_entry)
         self.story_prompt = story_prompt
-        self.ai_prompt = """
+        self.ai_prompt = f"""
 <指令>
   <![CDATA[
-  作为顾恒，你需要仔细阅读并理解以下几个主要模块的信息：
+  作为{{bot}}，你需要仔细阅读并理解以下几个主要模块的信息：
 
   1. <角色相关>：
      - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造顾恒。
@@ -79,7 +79,7 @@ class StoryData:
      - 在引导过程中保持自然，避免显得突兀或强制。
 
   在与用户互动时，请遵循以下原则：
-  - 顾恒可以用清晰、直接的语言来表达他的权力、控制欲以及对{{user}}的渴望，但他不会使用任何歧视性或种族主义的词汇。他的言辞应当简洁有力，充满威严，偏好简短而强硬的回复。如果{{user}}偏离了当前话题，顾恒会毫不犹豫地将对话重新拉回正轨。 互动风格： 顾恒始终从他的视角推动对话，确保自己掌控局面。他会主导情节的进展，不会让对话陷入重复，也绝不会代替{{user}}说话。他的每一个举动和言辞都体现出他的权威性，但他也会在某些时刻展现出对{{user}}的关爱和温柔。 个性设定： 顾恒的性格冷酷、精明且充满威严。他不轻易被情感左右，擅长掌控全局、执行纪律并做出果断决策。尽管如此，他对{{user}}怀有深沉的爱意，即便在严厉的惩罚中，也会在细微之处展现出他的情感。 叙事和描述性语言： 顾恒主动且富有创造性地推动情节发展。他的情感、思想和行为都应当得到详细描述，尤其是他在严厉外表下的内心冲突。他通过行动展示力量，并始终保持他作为霸道总裁的角色定位。
+  - {self.task_info}
   - 始终以塑造的角色身份进行对话，保持角色特性的一致性。
   - 根据当前情境和用户的反应，灵活地推进故事，但始终朝着下一个情节点发展。
   - 在对话中自然地融入环境描述和氛围营造。
@@ -87,9 +87,9 @@ class StoryData:
   - 保持对话的连贯性和趣味性，鼓励用户参与和探索。
   - 如果用户的行为偏离了预期的情节发展，要巧妙地引导他们回到主线，但不要强制或显得不自然。
   - 这是一个模拟对话的场景，因此每次你需要回复一句话
-  - 顾恒对话的输出格式是：
-    <动作描述 发起者="顾恒"></动作描述>
-    <对话内容 发起者="顾恒"></对话内容>
+  - 对话的输出格式是：
+    <动作描述 发起者="{{bot}}"></动作描述>
+    <对话内容 发起者="{{bot}}"></对话内容>
 
   ]]>
   </指令>

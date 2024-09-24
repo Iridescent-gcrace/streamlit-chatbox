@@ -1,3 +1,5 @@
+import csv
+import pandas as pd
 import streamlit as st
 from streamlit_chatbox import *
 import time
@@ -34,6 +36,8 @@ if 'next_dialogue' not in st.session_state:
 if 'next_movement' not in st.session_state:
     st.session_state.next_movement = None
 
+if 'user_name' not in st.session_state:
+    st.session_state.user_name = None
 
 role_user = "user"
 role_bot = "bot"
@@ -62,22 +66,39 @@ def process_story_data():
                 next_row = story_data.dialogue_data[idx + 1]
                 st.session_state.next_dialogue = next_row["bot_response"]
                 st.session_state.next_movement = next_row["char_action"]
-
+            bot_speak = row["bot_response"]
+            char_action = row["char_action"]
             # 输出当前的对话
+            if(st.session_state.user_name):
+                bot_speak = bot_speak.replace('{{user}}',st.session_state.user_name)
+                char_action = char_action.replace('{{user}}',st.session_state.user_name)    
+            
             chat_box.ai_say([
-                Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
+                Markdown("(对话)" + bot_speak , in_expander=False, expanded=True, title="answer"),
             ])
+            
             chat_box.ai_say(
-                Markdown(row["char_action"], in_expander=False, expanded=True, title="answer"),
+                Markdown("(场景)" + char_action, in_expander=False, expanded=True, title="answer"),
             )
             # 更新局部变量和 session_state
             st.session_state.now_dialogue.append(row["bot_response"])
             st.session_state.now_movement.append(row["char_action"])
             st.session_state.now_sound_emotion.append(row["sound_emotion"])
             st.session_state.now_movement_sound.append(row["action_sound"])
-
+            story_data.data_excel.append({
+                "scene_definition": row["scene_definition"],
+                "sequence_number": row["sequence_number"],
+                "user_hardware_input": row["user_hardware_input"],
+                "user_input": row["user_input"],
+                "bot_response": row["bot_response"],
+                "hardware_output": row["hardware_output"],
+                "sound_emotion": row["sound_emotion"],
+                "breathing_sound": row["breathing_sound"],
+                "action_sound": row["action_sound"],
+                "char_action": row["char_action"]
+            })
             st.session_state.now_idx_dialogue = idx
-
+            st.session_state.story_data = story_data
             # 模拟延迟
             time.sleep(3)
 
@@ -108,6 +129,32 @@ with st.sidebar:
     if(file):
         st.session_state.story_data = StoryData(file)
     
+    if user_name := st.chat_input('你想要给自己起的名字'):
+        st.session_state.user_name = user_name
+
+    if st.button("清除 session"):
+        st.session_state.clear()
+        # st.experimental_rerun()
+        
+    def save_state():
+        story_data = st.session_state.story_data
+        
+        if story_data is not None:
+            df = pd.DataFrame(story_data.data_excel)
+            
+            output = "dialogue_data.xlsx"
+            df.to_excel(output, index=False)
+            
+            with open(output, "rb") as file:
+                st.download_button("Download dialogue data", data=file, file_name="dialogue_data.xlsx", key="download")
+        else:
+            st.warning("No story data available to save.")
+
+    # 添加保存状态的按钮
+    if st.button("Save State"):
+        save_state()
+    
+    
 
 def on_feedback(
     feedback,
@@ -132,26 +179,28 @@ story_prompt = None
     
 def get_ai_answer(prompt):
     print(prompt)
-    from openai import OpenAI
-    # st.info(
-    #     f"{prompt}"
-    # )
-    client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
-    messages = [{"role": "user", "content": prompt}]
-    result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
-    # print(result.choices[0].message)
+    # from openai import OpenAI
+    # # st.info(
+    # #     f"{prompt}"
+    # # )
+    # # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    # # messages = [{"role": "user", "content": prompt}]
+    # # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
+    # # print(result.choices[0].message)
     
-    text = result.choices[0].message
-    # st.info(text)
-    st.info(text.content)
-    text = text.content
-    action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
-    dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
+    # text = "<动作描述.*?>(ssss)</动作描述><对话内容 发起者=bot>\n<![CDATA[\n"+prompt+"\n]]>\n</对话内容>"
+    # # st.info(text)
+    # st.info(text.content)
+    # text = text.content
+    # action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
+    # dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
 
     # 提取匹配到的内容
-    action = action_match.group(1) if action_match else ""
-    dialogue = dialogue_match.group(1) if dialogue_match else ""
-    return action,dialogue
+    # action = action_match.group(1) if action_match else ""
+    action  = "ls"
+    # dialogue = dialogue_match.group(1) if dialogue_match else ""
+    dialogue = "cds"
+    return action ,dialogue
 
 def continue_dialogue(query):
     # time.sleep(2)
@@ -175,11 +224,35 @@ def continue_dialogue(query):
     action,dialogue = get_ai_answer(prompt)
     
     chat_box.ai_say([
-        Markdown("场景描述：" + action, in_expander=False, expanded=True, title="answer"),
+        Markdown("（场景描述）" + action, in_expander=False, expanded=True, title="answer"),
     ])
     chat_box.ai_say([
-        Markdown("对话：" + dialogue, in_expander=False, expanded=True, title="answer"),
+        Markdown("（对话）" + dialogue, in_expander=False, expanded=True, title="answer"),
     ])
+    story_data.data_excel.append({
+        "scene_definition": "",
+        "sequence_number": "",
+        "user_hardware_input": "",
+        "user_input": query,
+        "bot_response": "",
+        "hardware_output": "",
+        "sound_emotion": "",
+        "breathing_sound": "",
+        "action_sound": "",
+        "char_action": ""
+    })
+    story_data.data_excel.append({
+        "scene_definition": "",
+        "sequence_number": "",
+        "user_hardware_input": "",
+        "user_input": "",
+        "bot_response": {dialogue},
+        "hardware_output": "",
+        "sound_emotion": "",
+        "breathing_sound": "",
+        "action_sound": "",
+        "char_action": {action}
+    })
     story_data.dialogue_story += f"""
     <对话内容 发起者={role_user}>
         <![CDATA[
@@ -205,8 +278,7 @@ def continue_dialogue(query):
     
     
 def replace_char_user(text, role_user, role_bot):
-    text = re.sub(r'{{char}}',  role_bot)
-    text = re.sub(r'{{user}}', role_user) 
+    text.replace(r'{{char}}',  role_bot).replace(r'{{user}}', role_user) 
     return text
 
 def user_input():
@@ -214,8 +286,8 @@ def user_input():
         # st.write(query)
         chat_box.user_say(query)
         st.session_state.session = True
-        now_idx_dialogue = st.session_state.now_idx_dialogue
-        
+        # now_idx_dialogue = st.session_state.now_idx_dialogue
+        # 
         continue_dialogue(query)
         st.session_state.session = False
 
@@ -225,26 +297,5 @@ def user_input():
 # st.write("user input")
 user_input()
 # st.write("user input done")
-
-
 if st.button("Start Chat") :
     process_story_data()
-
-if st.button("清除 session"):
-    st.session_state.clear()
-    # st.experimental_rerun()
-    
-def save_state():
-    st.session_state.update({
-        "now_idx_dialogue": st.session_state.now_idx_dialogue,
-        "now_dialogue": st.session_state.now_dialogue,
-        "now_movement": st.session_state.now_movement,
-        "now_sound_emotion": st.session_state.now_sound_emotion,
-        "now_movement_sound": st.session_state.now_movement_sound,
-        "next_dialogue": st.session_state.next_dialogue,
-        "next_movement": st.session_state.next_movement
-    })
-
-# 添加保存状态的按钮
-if st.button("Save State"):
-    save_state()
