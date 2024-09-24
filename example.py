@@ -67,7 +67,9 @@ def process_story_data():
             chat_box.ai_say([
                 Markdown(row["bot_response"], in_expander=False, expanded=True, title="answer"),
             ])
-
+            chat_box.ai_say(
+                Markdown(row["char_action"], in_expander=False, expanded=True, title="answer"),
+            )
             # 更新局部变量和 session_state
             st.session_state.now_dialogue.append(row["bot_response"])
             st.session_state.now_movement.append(row["char_action"])
@@ -129,6 +131,7 @@ story_prompt = None
 
     
 def get_ai_answer(prompt):
+    print(prompt)
     from openai import OpenAI
     # st.info(
     #     f"{prompt}"
@@ -216,8 +219,6 @@ def user_input():
         continue_dialogue(query)
         st.session_state.session = False
 
-if st.button("Start Chat") :
-    process_story_data()
 # story_data = StoryData()
 # st.write("process story data")
 # st.write("process story data done")
@@ -226,6 +227,8 @@ user_input()
 # st.write("user input done")
 
 
+if st.button("Start Chat") :
+    process_story_data()
 
 if st.button("清除 session"):
     st.session_state.clear()

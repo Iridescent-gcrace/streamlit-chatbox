@@ -25,14 +25,14 @@ class StoryData:
 
         # 提取表格中的不同部分
         self.character_info = excel_data.loc[excel_data['剧本相关'] == '人物设定', 'Unnamed: 1'].values[0]
-        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0]
+        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0].replace("{{char}}", '顾恒')
         self.story_background = excel_data.loc[excel_data['剧本相关'] == '此次故事背景', 'Unnamed: 1'].values[0]
         self.guidence = excel_data.loc[excel_data['剧本相关'] == '引导', 'Unnamed: 1'].values[0]
-
+ 
         # 找到“对话数据”的起始行
         dialogue_start_idx = excel_data[excel_data['剧本相关'] == '对话数据'].index[0] + 1
 
-                # 提取从“对话数据”之后的内容
+        # 提取从“对话数据”之后的内容
         self.dialogue_data = []
         print(excel_data.iloc[dialogue_start_idx:].iterrows())
         # os.write(1, f"{excel_data.iloc[dialogue_start_idx:].iterrows()}\n".encode()) 
@@ -45,17 +45,18 @@ class StoryData:
         for idx, row in excel_data.iloc[dialogue_start_idx:].iterrows():
             if not pd.isna(row['Unnamed: 5']):  # 确保'bot'（假设第6列）的列数据不为空
                 dialogue_entry = {
-                    "scene_definition": row['Unnamed: 3'],  # 场景定义 (假设为第1列)
-                    "sequence_number": row['Unnamed: 1'],  # 序号 (假设为第2列)
-                    "user_hardware_input": row['Unnamed: 2'],  # 用户硬件输入 (假设为第3列)
-                    "user_input": row['Unnamed: 3'],  # 用户输入 (假设为第4列)
-                    "bot_response": row['Unnamed: 4'],  # 机器人回复 (假设为第5列)
-                    "hardware_output": row['Unnamed: 5'],  # 硬件输出（可选） (假设为第6列)
-                    "sound_emotion": row['Unnamed: 7'],  # 声音情绪（必选） (假设为第7列)
-                    "breathing_sound": row['Unnamed: 8'],  # 喘息声音（可选） (假设为第8列)
-                    "action_sound": row['Unnamed: 9'],  # 动作声音（可选） (假设为第9列)
-                    "char_action": row['Unnamed: 10']  # 角色动作（可选） (假设为第10列)
+                    "scene_definition": row[0],  # 场景定义 (假设为第1列)
+                    "sequence_number": row[1],  # 序号 (假设为第2列)
+                    "user_hardware_input": row[2],  # 用户硬件输入 (假设为第3列)
+                    "user_input": row[3],  # 用户输入 (假设为第4列)
+                    "bot_response": row[4],  # 机器人回复 (假设为第5列)
+                    "hardware_output": row[5],  # 硬件输出（可选） (假设为第6列)
+                    "sound_emotion": row[6],  # 声音情绪（必选） (假设为第7列)
+                    "breathing_sound": row[7],  # 喘息声音（可选） (假设为第8列)
+                    "action_sound": row[8],  # 动作声音（可选） (假设为第9列)
+                    "char_action": row[9]  # 角色动作（可选） (假设为第10列)
                 }
+                print(dialogue_entry)
                 self.dialogue_data.append(dialogue_entry)
         self.story_prompt = story_prompt
         self.ai_prompt = """
@@ -130,11 +131,12 @@ class StoryData:
     
     def get_next_dialogue(self, goal):
     # 目标设定
-      goal = self.replace_you_and_me(goal)
+      #goal = self.replace_you_and_me(goal)
+      goal = goal.replace("你", "{{user}}").replace("我", '顾恒')
       goal_xml = f"<目标><![CDATA[{goal}]]></目标>"
       
       # 可能的引导方式
-      maybe_guide_xml = self.replace_you_and_me(self.guidence)
+      #maybe_guide_xml = self.replace_you_and_me(self.guidence)
       maybe_guide_xml = f"<可能的引导方式><![CDATA[{self.guidence}]]></可能的引导方式>"
 
       # 返回完整的下一个情节点提示
@@ -157,9 +159,9 @@ class StoryData:
           now_sound_emotion = sound_emotion[idx]
           now_movement_sound = movement_sound[idx]
           now_dialogue = dialogue[idx]
-          now_movement = self.replace_you_and_me(now_movement)
-          now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
-          now_movement_sound = self.replace_you_and_me(now_movement_sound)
+          now_movement = now_movement.replace("你", "{{user}}").replace("我", '顾恒')
+          #now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
+          #now_movement_sound = self.replace_you_and_me(now_movement_sound)
           self.dialogue_story += f"""
           <对话回合 序号="{idx + 1}">
             <动作描述 发起者={role}>![CDATA[{now_movement}][</bot动作>
@@ -169,7 +171,7 @@ class StoryData:
           
 
     def get_user_prompt(self, role, input):
-      input = self.replace_you_and_me(input)
+      #input = self.replace_you_and_me(input)
       self.user_prompt = f"""
         <对话内容 发起者="{role}">
           <![CDATA[
@@ -190,4 +192,3 @@ class StoryData:
         {self.user_prompt}
       </提示>
       """
-    
