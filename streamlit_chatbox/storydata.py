@@ -170,7 +170,7 @@ class StoryData:
           """
           
 
-    def get_user_prompt(self, role = 'user', input = ''):
+    def get_user_prompt(self, role, input):
       #input = self.replace_you_and_me(input)
       self.user_prompt = f"""
         <对话内容 发起者="{role}">

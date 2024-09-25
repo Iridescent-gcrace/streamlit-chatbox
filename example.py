@@ -150,7 +150,7 @@ with st.sidebar:
         
         if data_excel is not None:
             df = pd.DataFrame(data_excel)
-            st.write(data_excel)
+            # st.write(data_excel)
             output = "dialogue_data.xlsx"
             df.to_excel(output, index=False)
             
@@ -193,26 +193,22 @@ def get_ai_answer(prompt):
     if st.session_state.bot_name:
         prompt = prompt.replace('{{bot}}',st.session_state.bot_name)   
 
+    # # ———————————————算法服务———————————————————
     # from openai import OpenAI
-    # # st.info(
-    # #     f"{prompt}"
-    # # )
-    # # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
-    # # messages = [{"role": "user", "content": prompt}]
-    # # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
-    # # print(result.choices[0].message)
-    
-    # text = "<动作描述.*?>(ssss)</动作描述><对话内容 发起者=bot>\n<![CDATA[\n"+prompt+"\n]]>\n</对话内容>"
-    # # st.info(text)
-    # st.info(text.content)
+    # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    # messages = [{"role": "user", "content": prompt}]
+    # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
+    # print(result.choices[0].message)
     # text = text.content
     # action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
     # dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
-
-    # 提取匹配到的内容
     # action = action_match.group(1) if action_match else ""
-    action  = "ls"
     # dialogue = dialogue_match.group(1) if dialogue_match else ""
+    # # ——————————————————————————————————
+    
+    
+    #mock
+    action  = "ls"
     dialogue = "cds"
     return action ,dialogue
 
@@ -273,7 +269,7 @@ def continue_dialogue(query):
         "action_sound": "",
         "char_action": {action}
     })
-    st.info(data_excel)
+    # st.info(data_excel)
     story_data.dialogue_story += f"""
     <对话内容 发起者={role_user}>
         <![CDATA[
