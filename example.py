@@ -41,9 +41,12 @@ if 'data_excel' not in st.session_state:
 
 if 'user_name' not in st.session_state:
     st.session_state.user_name = None
+if 'bot_name' not in st.session_state:
+    st.session_state.bot_name = None
 
-role_user = "user"
-role_bot = "bot"
+
+# role_user = "user"
+# role_bot = "bot"
 
 
 def on_chat_change():
@@ -135,6 +138,8 @@ with st.sidebar:
     
     if user_name := st.chat_input('你想要给自己起的名字'):
         st.session_state.user_name = user_name
+    if bot_name := st.chat_input('你想要给机器人起的名字'):
+        st.session_state.bot_name = bot_name
 
     if st.button("清除 session"):
         st.session_state.clear()
@@ -183,6 +188,11 @@ story_prompt = None
     
 def get_ai_answer(prompt):
     print(prompt)
+    if st.session_state.user_name:
+        prompt = prompt.replace('{{user}}',st.session_state.user_name)
+    if st.session_state.bot_name:
+        prompt = prompt.replace('{{bot}}',st.session_state.bot_name)   
+
     # from openai import OpenAI
     # # st.info(
     # #     f"{prompt}"
@@ -221,7 +231,12 @@ def continue_dialogue(query):
     story_data.get_dialogue_story(role="bot", dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
     story_data.get_next_dialogue(next_dialogue)
     st.session_state.story_data = story_data
-       
+    role_user = "user"
+    if st.session_state.user_name:
+        role_user = st.session_state.user_name
+    role_bot = "bot"
+    if st.session_state.bot_name:
+        role_bot = st.session_state.bot_name
     story_data.get_user_prompt(role_user,query)
     story_data.get_basic_story_prompt()
     prompt = story_data.get_fianl_story_prompt()
