@@ -36,6 +36,9 @@ if 'next_dialogue' not in st.session_state:
 if 'next_movement' not in st.session_state:
     st.session_state.next_movement = None
 
+if 'data_excel' not in st.session_state:
+    st.session_state.data_excel = []
+
 if 'user_name' not in st.session_state:
     st.session_state.user_name = None
 
@@ -52,7 +55,7 @@ def on_chat_change():
 def process_story_data():
     now_idx_dialogue = st.session_state.now_idx_dialogue
     story_data = st.session_state.story_data
-
+    data_excel = st.session_state.data_excel
     if story_data is not None:
         total_dialogues = len(story_data.dialogue_data)
 
@@ -85,7 +88,7 @@ def process_story_data():
             st.session_state.now_movement.append(row["char_action"])
             st.session_state.now_sound_emotion.append(row["sound_emotion"])
             st.session_state.now_movement_sound.append(row["action_sound"])
-            story_data.data_excel.append({
+            data_excel.append({
                 "scene_definition": row["scene_definition"],
                 "sequence_number": row["sequence_number"],
                 "user_hardware_input": row["user_hardware_input"],
@@ -99,6 +102,7 @@ def process_story_data():
             })
             st.session_state.now_idx_dialogue = idx
             st.session_state.story_data = story_data
+            st.session_state.data_excel = data_excel
             # 模拟延迟
             time.sleep(3)
 
@@ -137,11 +141,11 @@ with st.sidebar:
         # st.experimental_rerun()
         
     def save_state():
-        story_data = st.session_state.story_data
+        data_excel = st.session_state.data_excel
         
-        if story_data is not None:
-            df = pd.DataFrame(story_data.data_excel)
-            
+        if data_excel is not None:
+            df = pd.DataFrame(data_excel)
+            st.write(data_excel)
             output = "dialogue_data.xlsx"
             df.to_excel(output, index=False)
             
@@ -217,7 +221,7 @@ def continue_dialogue(query):
     story_data.get_dialogue_story(role="bot", dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
     story_data.get_next_dialogue(next_dialogue)
     st.session_state.story_data = story_data
-    
+       
     story_data.get_user_prompt(role_user,query)
     story_data.get_basic_story_prompt()
     prompt = story_data.get_fianl_story_prompt()
@@ -229,7 +233,8 @@ def continue_dialogue(query):
     chat_box.ai_say([
         Markdown("（对话）" + dialogue, in_expander=False, expanded=True, title="answer"),
     ])
-    story_data.data_excel.append({
+    data_excel = st.session_state.data_excel
+    data_excel.append({
         "scene_definition": "",
         "sequence_number": "",
         "user_hardware_input": "",
@@ -241,7 +246,7 @@ def continue_dialogue(query):
         "action_sound": "",
         "char_action": ""
     })
-    story_data.data_excel.append({
+    data_excel.append({
         "scene_definition": "",
         "sequence_number": "",
         "user_hardware_input": "",
@@ -253,6 +258,7 @@ def continue_dialogue(query):
         "action_sound": "",
         "char_action": {action}
     })
+    st.info(data_excel)
     story_data.dialogue_story += f"""
     <对话内容 发起者={role_user}>
         <![CDATA[

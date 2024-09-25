@@ -32,7 +32,7 @@ class StoryData:
  
         # 找到“对话数据”的起始行
         dialogue_start_idx = excel_data[excel_data['剧本相关'] == '对话数据'].index[0] + 1
-        self.data_excel = []
+        # self.data_excel = []
         # 提取从“对话数据”之后的内容
         print(excel_data.iloc[dialogue_start_idx:].iterrows())
         # os.write(1, f"{excel_data.iloc[dialogue_start_idx:].iterrows()}\n".encode()) 
@@ -94,7 +94,7 @@ class StoryData:
   ]]>
   </指令>
   
-  """
+  """    
     def get_basic_story_prompt(self):
     # 故事角色相关设定
       character_info = f"<角色设定><![CDATA[{self.character_info}]]></角色设定>"
