@@ -250,25 +250,14 @@ def continue_dialogue(query):
         "sequence_number": "",
         "user_hardware_input": "",
         "user_input": query,
-        "bot_response": "",
+        "bot_response": dialogue,
         "hardware_output": "",
         "sound_emotion": "",
         "breathing_sound": "",
         "action_sound": "",
-        "char_action": ""
+        "char_action": action
     })
-    data_excel.append({
-        "scene_definition": "",
-        "sequence_number": "",
-        "user_hardware_input": "",
-        "user_input": "",
-        "bot_response": {dialogue},
-        "hardware_output": "",
-        "sound_emotion": "",
-        "breathing_sound": "",
-        "action_sound": "",
-        "char_action": {action}
-    })
+    
     # st.info(data_excel)
     story_data.dialogue_story += f"""
     <对话内容 发起者={role_user}>
