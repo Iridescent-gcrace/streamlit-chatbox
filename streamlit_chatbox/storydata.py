@@ -159,7 +159,7 @@ class StoryData:
           now_sound_emotion = sound_emotion[idx]
           now_movement_sound = movement_sound[idx]
           now_dialogue = dialogue[idx]
-          now_movement = now_movement.replace("你", "{{user}}").replace("我", '顾恒')
+          now_movement = now_movement.replace("你", "{{user}}").replace("我", '{{bot}}')
           #now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
           #now_movement_sound = self.replace_you_and_me(now_movement_sound)
           self.dialogue_story += f"""

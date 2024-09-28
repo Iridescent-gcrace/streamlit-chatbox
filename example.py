@@ -134,7 +134,8 @@ with st.sidebar:
         type=["xlsx", "xls"],
     )
     if(file):
-        st.session_state.story_data = StoryData(file)
+        if(st.session_state.story_data is None):         
+            st.session_state.story_data = StoryData(file)
     
     if user_name := st.chat_input('你想要给自己起的名字'):
         st.session_state.user_name = user_name
@@ -194,18 +195,21 @@ def get_ai_answer(prompt):
         prompt = prompt.replace('{{bot}}',st.session_state.bot_name)   
 
     # # ———————————————算法服务———————————————————
-    # from openai import OpenAI
-    # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
-    # messages = [{"role": "user", "content": prompt}]
-    # result = client.chat.completions.create(messages=messages,  model="/gemini/pretrain2/c4ai-command-r-08-2024")
-    # print(result.choices[0].message)
-    # text = text.content
-    # action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
-    # dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
-    # action = action_match.group(1) if action_match else ""
-    # dialogue = dialogue_match.group(1) if dialogue_match else ""
+    from openai import OpenAI
+    client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    print("prompt ------------------------------------------------\n", prompt)
+    messages = [{"role": "user", "content": prompt}]
+    result = client.chat.completions.create(messages=messages,  model="/gemini/code/LLaMA-Factory_new/saves/CommandR-35B-Chat/full/train_2024-09-21-08-15-11/checkpoint-30/")
+    print("response********************************************"+result.choices[0].message.content)
+    assert len(result.choices[0].message.content)!=0
+    st.write(result.choices[0].message.content)
+    text = result.choices[0].message.content
+    action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
+    dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
+    action = action_match.group(1) if action_match else ""
+    dialogue = dialogue_match.group(1) if dialogue_match else ""
+    print(action, action)
     # # ——————————————————————————————————
-    
     
     #mock
     action  = "ls"
@@ -223,20 +227,28 @@ def continue_dialogue(query):
     now_movement_sound = st.session_state.now_movement_sound
     next_dialogue = st.session_state.next_dialogue
     next_movement = st.session_state.next_movement
-    story_data.get_basic_story_prompt()
-    story_data.get_dialogue_story(role="bot", dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
-    story_data.get_next_dialogue(next_dialogue)
-    st.session_state.story_data = story_data
-    role_user = "user"
+    role_user = "{{user}}"
+    role_bot = "{{bot}}"
     if st.session_state.user_name:
         role_user = st.session_state.user_name
-    role_bot = "bot"
     if st.session_state.bot_name:
         role_bot = st.session_state.bot_name
+    
+    
+    
+    story_data.get_basic_story_prompt()
+    story_data.get_dialogue_story(role=role_bot, dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
+    story_data.get_next_dialogue(next_dialogue)
+    st.session_state.story_data = story_data
+    
     story_data.get_user_prompt(role_user,query)
     story_data.get_basic_story_prompt()
     prompt = story_data.get_fianl_story_prompt()
     action,dialogue = get_ai_answer(prompt)
+    action.replace('{{user}}',role_user)
+    action.replace('{{bot}}',role_bot)
+    dialogue.replace('{{user}}',role_user)
+    dialogue.replace('{{bot}}',role_bot)
     
     chat_box.ai_say([
         Markdown("（场景描述）" + action, in_expander=False, expanded=True, title="answer"),
@@ -284,7 +296,7 @@ def continue_dialogue(query):
     
     
 def replace_char_user(text, role_user, role_bot):
-    text.replace(r'{{char}}',  role_bot).replace(r'{{user}}', role_user) 
+    text.replace(r'{{bot}}',  role_bot).replace(r'{{user}}', role_user) 
     return text
 
 def user_input():
