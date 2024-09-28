@@ -26,7 +26,7 @@ class StoryData:
         self._excel2 = excel_data
         # 提取表格中的不同部分
         self.character_info = excel_data.loc[excel_data['剧本相关'] == '人物设定', 'Unnamed: 1'].values[0]
-        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0].replace("{{char}}", '顾恒')
+        self.task_info = excel_data.loc[excel_data['剧本相关'] == '任务设定\nconstrain\n无关话题处理方式\n建议行为', 'Unnamed: 1'].values[0].replace("{{char}}", '{{bot}}')
         self.story_background = excel_data.loc[excel_data['剧本相关'] == '此次故事背景', 'Unnamed: 1'].values[0]
         self.guidence = excel_data.loc[excel_data['剧本相关'] == '引导', 'Unnamed: 1'].values[0]
  
@@ -65,7 +65,7 @@ class StoryData:
   作为{{bot}}，你需要仔细阅读并理解以下几个主要模块的信息：
 
   1. <角色相关>：
-     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造顾恒。
+     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造{{bot}}。
      - 在整个对话过程中保持角色的一致性，同时根据情境适当调整情绪和语气。
 
   2. <故事相关>：
@@ -132,7 +132,7 @@ class StoryData:
     def get_next_dialogue(self, goal):
     # 目标设定
       #goal = self.replace_you_and_me(goal)
-      goal = goal.replace("你", "{{user}}").replace("我", '顾恒')
+      goal = goal.replace("你", "{{user}}").replace("我", '{{bot}}')
       goal_xml = f"<目标><![CDATA[{goal}]]></目标>"
       
       # 可能的引导方式
@@ -148,7 +148,7 @@ class StoryData:
       """
       return
       
-    def get_dialogue_story(self, role, 
+    def get_dialogue_story(self, now_role, 
                            dialogue, movement, sound_emotion, movement_sound):
       self.dialogue_story = ""
 
@@ -158,10 +158,13 @@ class StoryData:
           now_movement = movement[idx]
           now_sound_emotion = sound_emotion[idx]
           now_movement_sound = movement_sound[idx]
+          role = now_role[idx]
+          
           now_dialogue = dialogue[idx]
           now_movement = now_movement.replace("你", "{{user}}").replace("我", '{{bot}}')
           #now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
           #now_movement_sound = self.replace_you_and_me(now_movement_sound)
+          
           self.dialogue_story += f"""
           <对话回合 序号="{idx + 1}">
             <动作描述 发起者={role}>![CDATA[{now_movement}][</bot动作>

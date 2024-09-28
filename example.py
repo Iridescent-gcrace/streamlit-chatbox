@@ -46,7 +46,6 @@ def get_logger(logger_name: str = 'agent_logger', logger_dir:str = ''):
 
 
 
-
 logging = get_logger()
 chat_box = ChatBox()
 chat_box.use_chat_name("chat1") # add a chat conversatoin
@@ -82,7 +81,12 @@ if 'user_name' not in st.session_state:
     st.session_state.user_name = None
 if 'bot_name' not in st.session_state:
     st.session_state.bot_name = None
+    
+if 'dialogue_story' not in st.session_state:
+    st.session_state.dialogue_story = None
 
+if 'role' not in st.session_state:
+    st.session_state.role = []
 
 
 # role_user = "user"
@@ -127,6 +131,7 @@ def process_story_data():
                 Markdown("(场景)" + char_action, in_expander=False, expanded=True, title="answer"),
             )
             # 更新局部变量和 session_state
+            st.session_state.role.append("{{bot}}")
             st.session_state.now_dialogue.append(row["bot_response"])
             st.session_state.now_movement.append(row["char_action"])
             st.session_state.now_sound_emotion.append(row["sound_emotion"])
@@ -181,6 +186,7 @@ with st.sidebar:
         st.session_state.user_name = user_name
     if bot_name := st.chat_input('你想要给机器人起的名字'):
         st.session_state.bot_name = bot_name
+
     logging.info(f"user_name:{user_name}")
     logging.info(f"bot_name:{bot_name}")
     if st.button("清除 session"):
@@ -230,7 +236,7 @@ story_prompt = None
     
 def get_ai_answer(prompt):
     print(prompt)
-    
+
     if st.session_state.user_name:
         prompt = prompt.replace('{{user}}',st.session_state.user_name)
     if st.session_state.bot_name:
@@ -280,6 +286,7 @@ def continue_dialogue(query):
     now_movement = st.session_state.now_movement
     now_sound_emotion = st.session_state.now_sound_emotion
     now_movement_sound = st.session_state.now_movement_sound
+    now_role = st.session_state.role
     next_dialogue = st.session_state.next_dialogue
     next_movement = st.session_state.next_movement
     role_user = "{{user}}"
@@ -292,7 +299,7 @@ def continue_dialogue(query):
     
     
     story_data.get_basic_story_prompt()
-    story_data.get_dialogue_story(role=role_bot, dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
+    story_data.get_dialogue_story(now_role=now_role, dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
     story_data.get_next_dialogue(next_dialogue)
     st.session_state.story_data = story_data
     
@@ -326,27 +333,25 @@ def continue_dialogue(query):
     })
     
     # st.info(data_excel)
-    story_data.dialogue_story += f"""
-    <对话内容 发起者={role_user}>
-        <![CDATA[
-        {query}
-        ]]>
-    </对话内容>
+    now_dialogue.append(query)
+    now_role.append("{{user}}")
+    now_movement.append("")
+    now_sound_emotion.append("")
+    now_movement_sound.append("")
     
-    """
+    now_dialogue.append(dialogue)
+    now_role.append("{{bot}}")
+    now_movement.append(action)
+    now_sound_emotion.append("")
+    now_movement_sound.append("")
     
-    story_data.dialogue_story += f"""
-        <动作描述 发起者={role_bot}>
-            <![CDATA[
-                {action}
-            ]]>
-        </动作描述>
-        <对话内容 发起者={role_bot}>
-            <![CDATA[
-                {dialogue}
-            ]]>
-        </对话内容>
-    """
+    
+    st.session_state.now_role = now_role
+    st.session_state.now_movement = now_movement
+    st.session_state.now_sound_emotion = now_sound_emotion
+    st.session_state.now_movement_sound = now_movement_sound
+    st.session_state.now_dialogue = now_dialogue
+
     st.session_state.story_data = story_data
     
     
