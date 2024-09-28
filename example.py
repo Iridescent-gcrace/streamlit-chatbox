@@ -5,10 +5,49 @@ from streamlit_chatbox import *
 import time
 import simplejson as json
 import re
+import logging as log
 
+import os
+import time
+import logging
+import logging.handlers
 
 from streamlit_chatbox.storydata import StoryData
 
+
+def get_logger(logger_name: str = 'agent_logger', logger_dir:str = ''):
+    LOG_FORMAT_ALL = '[%(asctime)s] [%(levelname)s] File "%(filename)s", line %(lineno)d: %(message)s'
+    LOG_FORMAT_ERROR = '[%(asctime)s] [%(levelname)s] File "%(filename)s", line %(lineno)d: %(message)s'
+    LOG_FILE_PATH = './logs/run_logs'
+    LOG_LEVEL = logging.DEBUG
+    
+    if logger_dir == '':
+        logger_dir = LOG_FILE_PATH
+    
+    if not os.path.exists(logger_dir):
+        os.makedirs(logger_dir)
+        
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(LOG_LEVEL)
+
+    rf_handler = logging.handlers.TimedRotatingFileHandler(f'{logger_dir}/{logger_name}_all.log', when='midnight')
+    rf_handler.setFormatter(logging.Formatter(LOG_FORMAT_ALL))
+
+    f_handler = logging.FileHandler(f'{logger_dir}/{logger_name}_error.log')
+    f_handler.setLevel(logging.ERROR)
+    f_handler.setFormatter(logging.Formatter(LOG_FORMAT_ERROR))
+
+    logger.addHandler(rf_handler)
+    logger.addHandler(f_handler)
+    
+    return logger
+
+
+
+
+
+
+logging = get_logger()
 chat_box = ChatBox()
 chat_box.use_chat_name("chat1") # add a chat conversatoin
 
@@ -43,6 +82,7 @@ if 'user_name' not in st.session_state:
     st.session_state.user_name = None
 if 'bot_name' not in st.session_state:
     st.session_state.bot_name = None
+
 
 
 # role_user = "user"
@@ -141,7 +181,8 @@ with st.sidebar:
         st.session_state.user_name = user_name
     if bot_name := st.chat_input('你想要给机器人起的名字'):
         st.session_state.bot_name = bot_name
-
+    logging.info(f"user_name:{user_name}")
+    logging.info(f"bot_name:{bot_name}")
     if st.button("清除 session"):
         st.session_state.clear()
         # st.experimental_rerun()
@@ -189,6 +230,7 @@ story_prompt = None
     
 def get_ai_answer(prompt):
     print(prompt)
+    
     if st.session_state.user_name:
         prompt = prompt.replace('{{user}}',st.session_state.user_name)
     if st.session_state.bot_name:
@@ -198,8 +240,10 @@ def get_ai_answer(prompt):
     from openai import OpenAI
     client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
     print("prompt ------------------------------------------------\n", prompt)
+    logging.info("prompt:{prompt}")
     messages = [{"role": "user", "content": prompt}]
     result = client.chat.completions.create(messages=messages,  model="/gemini/code/LLaMA-Factory_new/saves/CommandR-35B-Chat/full/train_2024-09-21-08-15-11/checkpoint-30/")
+    logging.info(f"response:{result.choices[0].message.content}")
     print("response********************************************"+result.choices[0].message.content)
     assert len(result.choices[0].message.content)!=0
     st.write(result.choices[0].message.content)
@@ -208,6 +252,8 @@ def get_ai_answer(prompt):
     dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
     action = action_match.group(1) if action_match else ""
     dialogue = dialogue_match.group(1) if dialogue_match else ""
+    logging.info(f"action:{action}")
+    logging.info(f"dialogue:{dialogue}")
     print(action, action)
     # # ——————————————————————————————————
     
@@ -216,6 +262,15 @@ def get_ai_answer(prompt):
     # dialogue = "cds"
     return action ,dialogue
 
+
+
+
+# logger = get_logger()
+
+# logging = get_logger()
+# logging.info(f"{'='*50} {model_id}  INPUT  {'='*50}")
+# logging.info(f"user:{user}")
+# logging.info(f"bot:{bot}")
 def continue_dialogue(query):
     # time.sleep(2)
     story_data = st.session_state.story_data
