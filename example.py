@@ -212,8 +212,8 @@ def get_ai_answer(prompt):
     # # ——————————————————————————————————
     
     #mock
-    action  = "ls"
-    dialogue = "cds"
+    # action  = "ls"
+    # dialogue = "cds"
     return action ,dialogue
 
 def continue_dialogue(query):
