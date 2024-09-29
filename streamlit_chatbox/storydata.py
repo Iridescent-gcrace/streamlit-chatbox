@@ -133,6 +133,8 @@ class StoryData:
     def get_next_dialogue(self, goal):
     # 目标设定
       #goal = self.replace_you_and_me(goal)
+      if goal == None:
+        goal = ""
       goal = goal.replace("你", "{{user}}").replace("我", '{{bot}}')
       goal_xml = f"<目标><![CDATA[{goal}]]></目标>"
       
@@ -162,6 +164,8 @@ class StoryData:
           role = now_role[idx]
           
           now_dialogue = dialogue[idx]
+          if now_dialogue == None:
+            now_dialogue = ""
           now_movement = now_movement.replace("你", "{{user}}").replace("我", '{{bot}}')
           #now_sound_emotion = self.replace_you_and_me(now_sound_emotion)
           #now_movement_sound = self.replace_you_and_me(now_movement_sound)

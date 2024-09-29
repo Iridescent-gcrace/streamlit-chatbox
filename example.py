@@ -120,8 +120,15 @@ def process_story_data():
             char_action = row["char_action"]
             # 输出当前的对话
             if(st.session_state.user_name):
-                bot_speak = bot_speak.replace('{{user}}',st.session_state.user_name)
-                char_action = char_action.replace('{{user}}',st.session_state.user_name)    
+                if(bot_speak!=None):
+                    bot_speak = bot_speak.replace('{{user}}',st.session_state.user_name)
+                else:
+                    bot_speak = ""
+                if(char_action!=None):
+                    char_action = char_action.replace('{{user}}',st.session_state.user_name)
+                else:
+                    char_action = ""
+                   
             
             chat_box.ai_say([
                 Markdown("(对话)" + bot_speak , in_expander=False, expanded=True, title="answer"),
@@ -307,8 +314,12 @@ def continue_dialogue(query):
     story_data.get_basic_story_prompt()
     prompt = story_data.get_fianl_story_prompt()
     action,dialogue = get_ai_answer(prompt)
+    if action is None:
+        action = ""
     action.replace('{{user}}',role_user)
     action.replace('{{bot}}',role_bot)
+    if dialogue is None:
+        dialogue = ""
     dialogue.replace('{{user}}',role_user)
     dialogue.replace('{{bot}}',role_bot)
     
@@ -354,10 +365,7 @@ def continue_dialogue(query):
 
     st.session_state.story_data = story_data
     
-    
-def replace_char_user(text, role_user, role_bot):
-    text.replace(r'{{bot}}',  role_bot).replace(r'{{user}}', role_user) 
-    return text
+
 
 def user_input():
     if query := st.chat_input('input your question here'):
