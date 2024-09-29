@@ -235,7 +235,7 @@ story_prompt = None
 
     
 def get_ai_answer(prompt):
-    print(prompt)
+    print("______________________________________________\n"+prompt)
 
     if st.session_state.user_name:
         prompt = prompt.replace('{{user}}',st.session_state.user_name)
@@ -243,29 +243,29 @@ def get_ai_answer(prompt):
         prompt = prompt.replace('{{bot}}',st.session_state.bot_name)   
 
     # # ———————————————算法服务———————————————————
-    from openai import OpenAI
-    client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
-    print("prompt ------------------------------------------------\n", prompt)
-    logging.info("prompt:{prompt}")
-    messages = [{"role": "user", "content": prompt}]
-    result = client.chat.completions.create(messages=messages,  model="/gemini/code/LLaMA-Factory_new/saves/CommandR-35B-Chat/full/train_2024-09-21-08-15-11/checkpoint-30/")
-    logging.info(f"response:{result.choices[0].message.content}")
-    print("response********************************************"+result.choices[0].message.content)
-    assert len(result.choices[0].message.content)!=0
-    st.write(result.choices[0].message.content)
-    text = result.choices[0].message.content
-    action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
-    dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
-    action = action_match.group(1) if action_match else ""
-    dialogue = dialogue_match.group(1) if dialogue_match else ""
-    logging.info(f"action:{action}")
-    logging.info(f"dialogue:{dialogue}")
-    print(action, action)
+    # from openai import OpenAI
+    # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
+    # print("prompt ------------------------------------------------\n", prompt)
+    # logging.info("prompt:{prompt}")
+    # messages = [{"role": "user", "content": prompt}]
+    # result = client.chat.completions.create(messages=messages,  model="/gemini/code/LLaMA-Factory_new/saves/CommandR-35B-Chat/full/train_2024-09-21-08-15-11/checkpoint-30/")
+    # logging.info(f"response:{result.choices[0].message.content}")
+    # print("response********************************************"+result.choices[0].message.content)
+    # assert len(result.choices[0].message.content)!=0
+    # st.write(result.choices[0].message.content)
+    # text = result.choices[0].message.content
+    # action_match = re.search(r'<动作描述.*?>(.*?)</动作描述>', text, re.DOTALL)
+    # dialogue_match = re.search(r'<对话内容.*?>(.*?)</对话内容>', text, re.DOTALL)
+    # action = action_match.group(1) if action_match else ""
+    # dialogue = dialogue_match.group(1) if dialogue_match else ""
+    # logging.info(f"action:{action}")
+    # logging.info(f"dialogue:{dialogue}")
+    # print(action, action)
     # # ——————————————————————————————————
     
     #mock
-    # action  = "ls"
-    # dialogue = "cds"
+    action  = "ls"
+    dialogue = "cds"
     return action ,dialogue
 
 
@@ -297,10 +297,10 @@ def continue_dialogue(query):
         role_bot = st.session_state.bot_name
     
     
-    
+    story_data.get_next_dialogue(next_dialogue)
+
     story_data.get_basic_story_prompt()
     story_data.get_dialogue_story(now_role=now_role, dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
-    story_data.get_next_dialogue(next_dialogue)
     st.session_state.story_data = story_data
     
     story_data.get_user_prompt(role_user,query)

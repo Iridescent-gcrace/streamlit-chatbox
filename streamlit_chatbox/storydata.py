@@ -62,10 +62,10 @@ class StoryData:
         self.ai_prompt = f"""
 <指令>
   <![CDATA[
-  作为{{bot}}，你需要仔细阅读并理解以下几个主要模块的信息：
+  作为{{{{bot}}}}，你需要仔细阅读并理解以下几个主要模块的信息：
 
   1. <角色相关>：
-     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造{{bot}}。
+     - 根据提供的基本情况、特殊声音和可能的情绪状态来塑造{{{{bot}}}}。
      - 在整个对话过程中保持角色的一致性，同时根据情境适当调整情绪和语气。
 
   2. <故事相关>：
@@ -88,8 +88,8 @@ class StoryData:
   - 如果用户的行为偏离了预期的情节发展，要巧妙地引导他们回到主线，但不要强制或显得不自然。
   - 这是一个模拟对话的场景，因此每次你需要回复一句话
   - 对话的输出格式是：
-    <动作描述 发起者="{{bot}}"></动作描述>
-    <对话内容 发起者="{{bot}}"></对话内容>
+    <动作描述 发起者="{{{{bot}}}}"></动作描述>
+    <对话内容 发起者="{{{{bot}}}}"></对话内容>
 
   ]]>
   </指令>
@@ -106,7 +106,7 @@ class StoryData:
       movement_sound = f"<可选故事环境音><![CDATA[{self.movement_sound_row}]]></可选故事环境音>"
 
       # AI的指令
-      ai_prompt = f"<指令><![CDATA[{self.ai_prompt}]]></指令>"
+      ai_prompt = self.ai_prompt
 
       # 返回完整的故事提示
       self.basic_prompt =  f"""
@@ -119,6 +119,7 @@ class StoryData:
         {story_background}
         {movement_sound}
       </故事相关>
+      {self.next_dialogue}
       {ai_prompt}
       """
       return 
@@ -188,7 +189,6 @@ class StoryData:
       return f"""
       <提示>
         {self.basic_prompt}
-        {self.next_dialogue}
         <故事日志>
           {self.dialogue_story}
         <故事日志>
