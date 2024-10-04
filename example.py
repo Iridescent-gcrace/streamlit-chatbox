@@ -249,6 +249,8 @@ def get_ai_answer(prompt):
     if st.session_state.bot_name:
         prompt = prompt.replace('{{bot}}',st.session_state.bot_name)   
 
+    st.info(prompt)
+
     # # ———————————————算法服务———————————————————
     # from openai import OpenAI
     # client = OpenAI(api_key="0",base_url="http://direct.virtaicloud.com:42275/v1")
@@ -329,6 +331,9 @@ def continue_dialogue(query):
     chat_box.ai_say([
         Markdown("（对话）" + dialogue, in_expander=False, expanded=True, title="answer"),
     ])
+    
+    another_prompt(query)
+    
     data_excel = st.session_state.data_excel
     data_excel.append({
         "scene_definition": "",
@@ -364,7 +369,51 @@ def continue_dialogue(query):
     st.session_state.now_dialogue = now_dialogue
 
     st.session_state.story_data = story_data
+
+def another_prompt(query):
+    story_data = st.session_state.story_data
+    # st.write("++++++++")
+    # st.write( story_data.__dict__)
+    now_dialogue = st.session_state.now_dialogue
+    now_movement = st.session_state.now_movement
+    now_sound_emotion = st.session_state.now_sound_emotion
+    now_movement_sound = st.session_state.now_movement_sound
+    now_role = st.session_state.role
+    next_dialogue = st.session_state.next_dialogue
+    next_movement = st.session_state.next_movement
+    role_user = "{{user}}"
+    role_bot = "{{bot}}"
+    if st.session_state.user_name:
+        role_user = st.session_state.user_name
+    if st.session_state.bot_name:
+        role_bot = st.session_state.bot_name
     
+    
+    story_data.get_next_dialogue_v2(next_dialogue,next_movement)
+
+    story_data.get_basic_story_prompt()
+    story_data.get_dialogue_story(now_role=now_role, dialogue=now_dialogue, movement=now_movement, sound_emotion=now_sound_emotion, movement_sound=now_movement_sound)
+    st.session_state.story_data = story_data
+    
+    story_data.get_user_prompt(role_user,query)
+    story_data.get_basic_story_prompt()
+    prompt = story_data.get_fianl_story_prompt()
+    action,dialogue = get_ai_answer(prompt)
+    if action is None:
+        action = ""
+    action.replace('{{user}}',role_user)
+    action.replace('{{bot}}',role_bot)
+    if dialogue is None:
+        dialogue = ""
+    dialogue.replace('{{user}}',role_user)
+    dialogue.replace('{{bot}}',role_bot)
+    
+    chat_box.ai_say([
+        Markdown("（场景描述）" + action, in_expander=False, expanded=True, title="answer"),
+    ])
+    chat_box.ai_say([
+        Markdown("（对话）" + dialogue, in_expander=False, expanded=True, title="answer"),
+    ])
 
 
 def user_input():

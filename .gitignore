@@ -3,3 +3,4 @@ __pycache__
 /dist
 /streamlit_chatbox.egg-info
 .venv/
+.vscode/

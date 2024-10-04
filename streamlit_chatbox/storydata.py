@@ -124,6 +124,17 @@ class StoryData:
       """
       return 
 
+    def get_fianl_story_prompt(self):
+      return f"""
+      <提示>
+        {self.basic_prompt}
+        <故事日志>
+          {self.dialogue_story}
+        <故事日志>
+        {self.user_prompt}
+      </提示>
+      """
+    
     def replace_you_and_me(self, text):
       text = re.sub(r'我', '{{char}}', text)
       text = re.sub(r'你', '{{user}}', text) 
@@ -150,7 +161,37 @@ class StoryData:
       </下一个情节点>
       """
       return
+    
+    def get_next_dialogue_v2(self,goal, guide):
+      if goal == None:
+        goal = ""
+      goal = goal.replace("你", "{{user}}").replace("我", '{{bot}}')
+      guide = guide.replace("你", "{{user}}").replace("我", '{{bot}}')
       
+      goal_xml = f"""<目标情节点>
+      <动作描述 发起者="{{{{bot}}}}">
+      {guide}
+      </动作描述>
+      <对话内容 发起者="{{{{bot}}}}">
+      {goal}
+      </对话内容>
+      </目标情节点>"""
+      
+      # 可能的引导方式
+      #maybe_guide_xml = self.replace_you_and_me(self.guidence)
+      maybe_guide_xml = f"<可能的引导方式><![CDATA[{self.guidence}]]></可能的引导方式>"
+
+      # 返回完整的下一个情节点提示
+      self.next_dialogue =  f"""
+      <下一个情节点>
+        {goal_xml}
+        {maybe_guide_xml}
+      </下一个情节点>
+      """
+      return
+    
+    
+    
     def get_dialogue_story(self, now_role, 
                            dialogue, movement, sound_emotion, movement_sound):
       self.dialogue_story = ""
@@ -189,13 +230,4 @@ class StoryData:
       
       """
     
-    def get_fianl_story_prompt(self):
-      return f"""
-      <提示>
-        {self.basic_prompt}
-        <故事日志>
-          {self.dialogue_story}
-        <故事日志>
-        {self.user_prompt}
-      </提示>
-      """
+    
